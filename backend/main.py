@@ -5,20 +5,15 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
-# =========================
-# CORS (IMPORTANT)
-# =========================
-
+# CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "https://resilient-gnome-7413f0.netlify.app"
-    ],
+    allow_origins=["*"],   # TEMP FIX FOR DEPLOYMENT
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 # =========================
 # PRODUCT TABLE
@@ -61,13 +56,8 @@ class Order(Base):
     total_amount = Column(Integer)
 
 
-# Create tables
 Base.metadata.create_all(bind=engine)
 
-
-# =========================
-# HOME
-# =========================
 
 @app.get("/")
 def home():
@@ -82,20 +72,28 @@ def home():
 def add_product(name: str, sku: str, price: int, quantity: int):
     db = SessionLocal()
 
-    new_product = Product(
-        name=name,
-        sku=sku,
-        price=price,
-        quantity=quantity
-    )
+    try:
+        new_product = Product(
+            name=name,
+            sku=sku,
+            price=price,
+            quantity=quantity
+        )
 
-    db.add(new_product)
-    db.commit()
-    db.refresh(new_product)
+        db.add(new_product)
+        db.commit()
+        db.refresh(new_product)
 
-    return {
-        "message": "Product added successfully"
-    }
+        return {
+            "message": "Product added successfully"
+        }
+
+    except Exception as e:
+        db.rollback()
+        return {"error": str(e)}
+
+    finally:
+        db.close()
 
 
 @app.get("/products")
@@ -104,6 +102,7 @@ def get_products():
 
     products = db.query(Product).all()
 
+    db.close()
     return products
 
 
@@ -121,9 +120,9 @@ def update_product(product_id: int, quantity: int):
     product.quantity = quantity
     db.commit()
 
-    return {
-        "message": "Product updated successfully"
-    }
+    db.close()
+
+    return {"message": "Product updated successfully"}
 
 
 @app.delete("/delete-product")
@@ -140,9 +139,9 @@ def delete_product(product_id: int):
     db.delete(product)
     db.commit()
 
-    return {
-        "message": "Product deleted successfully"
-    }
+    db.close()
+
+    return {"message": "Product deleted successfully"}
 
 
 # =========================
@@ -153,19 +152,26 @@ def delete_product(product_id: int):
 def add_customer(full_name: str, email: str, phone: str):
     db = SessionLocal()
 
-    new_customer = Customer(
-        full_name=full_name,
-        email=email,
-        phone=phone
-    )
+    try:
+        new_customer = Customer(
+            full_name=full_name,
+            email=email,
+            phone=phone
+        )
 
-    db.add(new_customer)
-    db.commit()
-    db.refresh(new_customer)
+        db.add(new_customer)
+        db.commit()
 
-    return {
-        "message": "Customer added successfully"
-    }
+        return {
+            "message": "Customer added successfully"
+        }
+
+    except Exception as e:
+        db.rollback()
+        return {"error": str(e)}
+
+    finally:
+        db.close()
 
 
 @app.get("/customers")
@@ -173,6 +179,8 @@ def get_customers():
     db = SessionLocal()
 
     customers = db.query(Customer).all()
+
+    db.close()
 
     return customers
 
@@ -190,6 +198,8 @@ def delete_customer(customer_id: int):
 
     db.delete(customer)
     db.commit()
+
+    db.close()
 
     return {
         "message": "Customer deleted successfully"
@@ -225,10 +235,8 @@ def create_order(
     if product.quantity < quantity:
         return {"message": "Not enough stock"}
 
-    # Reduce stock
     product.quantity -= quantity
 
-    # Total price
     total_amount = quantity * product.price
 
     new_order = Order(
@@ -241,6 +249,8 @@ def create_order(
     db.add(new_order)
     db.commit()
 
+    db.close()
+
     return {
         "message": "Order created successfully"
     }
@@ -251,5 +261,7 @@ def get_orders():
     db = SessionLocal()
 
     orders = db.query(Order).all()
+
+    db.close()
 
     return orders
