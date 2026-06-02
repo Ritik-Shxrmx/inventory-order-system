@@ -2,6 +2,9 @@ import "./App.css";
 import { useEffect, useState } from "react";
 
 function App() {
+  // CHANGE THIS TO YOUR RENDER BACKEND URL
+  const API_URL = "https://inventory-backend-wy70.onrender.com";
+
   // PRODUCT STATES
   const [products, setProducts] = useState([]);
   const [name, setName] = useState("");
@@ -29,15 +32,18 @@ function App() {
 
   // PRODUCTS
   const getProducts = () => {
-    fetch("http://127.0.0.1:8000/products")
+    fetch(`${API_URL}/products`)
       .then((response) => response.json())
-      .then((data) => setProducts(data));
+      .then((data) => setProducts(data))
+      .catch((error) => console.error(error));
   };
 
   const addProduct = () => {
     fetch(
-      `http://127.0.0.1:8000/add-product?name=${name}&sku=${sku}&price=${price}&quantity=${quantity}`,
-      { method: "POST" }
+      `${API_URL}/add-product?name=${name}&sku=${sku}&price=${price}&quantity=${quantity}`,
+      {
+        method: "POST",
+      }
     )
       .then((response) => response.json())
       .then(() => {
@@ -50,10 +56,9 @@ function App() {
   };
 
   const deleteProduct = (id) => {
-    fetch(
-      `http://127.0.0.1:8000/delete-product?product_id=${id}`,
-      { method: "DELETE" }
-    )
+    fetch(`${API_URL}/delete-product?product_id=${id}`, {
+      method: "DELETE",
+    })
       .then((response) => response.json())
       .then(() => getProducts());
   };
@@ -64,8 +69,10 @@ function App() {
     if (!newQuantity) return;
 
     fetch(
-      `http://127.0.0.1:8000/update-product?product_id=${id}&quantity=${newQuantity}`,
-      { method: "PUT" }
+      `${API_URL}/update-product?product_id=${id}&quantity=${newQuantity}`,
+      {
+        method: "PUT",
+      }
     )
       .then((response) => response.json())
       .then(() => getProducts());
@@ -73,15 +80,17 @@ function App() {
 
   // CUSTOMERS
   const getCustomers = () => {
-    fetch("http://127.0.0.1:8000/customers")
+    fetch(`${API_URL}/customers`)
       .then((response) => response.json())
       .then((data) => setCustomers(data));
   };
 
   const addCustomer = () => {
     fetch(
-      `http://127.0.0.1:8000/add-customer?full_name=${fullName}&email=${email}&phone=${phone}`,
-      { method: "POST" }
+      `${API_URL}/add-customer?full_name=${fullName}&email=${email}&phone=${phone}`,
+      {
+        method: "POST",
+      }
     )
       .then((response) => response.json())
       .then(() => {
@@ -93,25 +102,26 @@ function App() {
   };
 
   const deleteCustomer = (id) => {
-    fetch(
-      `http://127.0.0.1:8000/delete-customer?customer_id=${id}`,
-      { method: "DELETE" }
-    )
+    fetch(`${API_URL}/delete-customer?customer_id=${id}`, {
+      method: "DELETE",
+    })
       .then((response) => response.json())
       .then(() => getCustomers());
   };
 
   // ORDERS
   const getOrders = () => {
-    fetch("http://127.0.0.1:8000/orders")
+    fetch(`${API_URL}/orders`)
       .then((response) => response.json())
       .then((data) => setOrders(data));
   };
 
   const createOrder = () => {
     fetch(
-      `http://127.0.0.1:8000/create-order?customer_id=${selectedCustomer}&product_id=${selectedProduct}&quantity=${orderQuantity}`,
-      { method: "POST" }
+      `${API_URL}/create-order?customer_id=${selectedCustomer}&product_id=${selectedProduct}&quantity=${orderQuantity}`,
+      {
+        method: "POST",
+      }
     )
       .then((response) => response.json())
       .then(() => {
@@ -127,7 +137,6 @@ function App() {
     <div className="app">
       <h1 className="title">Inventory Management System</h1>
 
-      {/* Dashboard */}
       <div className="dashboard">
         <div className="card">
           <h3>Total Products</h3>
@@ -146,13 +155,10 @@ function App() {
 
         <div className="card">
           <h3>Low Stock</h3>
-          <p>
-            {products.filter((product) => product.quantity < 5).length}
-          </p>
+          <p>{products.filter((product) => product.quantity < 5).length}</p>
         </div>
       </div>
 
-      {/* PRODUCTS */}
       <div className="section">
         <h2>Products</h2>
 
@@ -214,7 +220,6 @@ function App() {
         ))}
       </div>
 
-      {/* CUSTOMERS */}
       <div className="section">
         <h2>Customers</h2>
 
@@ -261,24 +266,18 @@ function App() {
         ))}
       </div>
 
-      {/* CREATE ORDER */}
       <div className="section">
         <h2>Create Order</h2>
 
         <div className="form-row">
           <select
             value={selectedCustomer}
-            onChange={(e) =>
-              setSelectedCustomer(e.target.value)
-            }
+            onChange={(e) => setSelectedCustomer(e.target.value)}
           >
             <option value="">Select Customer</option>
 
             {customers.map((customer) => (
-              <option
-                key={customer.id}
-                value={customer.id}
-              >
+              <option key={customer.id} value={customer.id}>
                 {customer.full_name}
               </option>
             ))}
@@ -286,19 +285,12 @@ function App() {
 
           <select
             value={selectedProduct}
-            onChange={(e) =>
-              setSelectedProduct(e.target.value)
-            }
+            onChange={(e) => setSelectedProduct(e.target.value)}
           >
-            <option value="">
-              Select Product
-            </option>
+            <option value="">Select Product</option>
 
             {products.map((product) => (
-              <option
-                key={product.id}
-                value={product.id}
-              >
+              <option key={product.id} value={product.id}>
                 {product.name}
               </option>
             ))}
@@ -308,9 +300,7 @@ function App() {
             type="number"
             placeholder="Quantity"
             value={orderQuantity}
-            onChange={(e) =>
-              setOrderQuantity(e.target.value)
-            }
+            onChange={(e) => setOrderQuantity(e.target.value)}
           />
 
           <button className="add-btn" onClick={createOrder}>
@@ -319,7 +309,6 @@ function App() {
         </div>
       </div>
 
-      {/* ORDERS */}
       <div className="section">
         <h2>Orders</h2>
 
